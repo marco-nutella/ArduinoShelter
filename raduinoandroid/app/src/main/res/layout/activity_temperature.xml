@@ -13,7 +13,7 @@
         android:layout_width="97dp"
         android:layout_height="32dp"
         android:layout_marginStart="178dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="20dp"
         android:layout_marginEnd="178dp"
         android:text="Reconnect"
         android:textColor="#0B0A0A"
@@ -28,7 +28,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginStart="50dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="50dp"
         android:background="@drawable/roundedbutton"
         android:contentDescription="bluetooth connect button"
@@ -45,7 +45,7 @@
         android:layout_width="180dp"
         android:layout_height="52dp"
         android:layout_marginStart="30dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="15dp"
         android:text="Ventilation:"
         android:textAllCaps="true"
         android:textColor="#121111"
@@ -59,7 +59,7 @@
         android:layout_width="296dp"
         android:layout_height="52dp"
         android:layout_marginStart="28dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="15dp"
         android:text="Automatic Ventilation:"
         android:textAllCaps="true"
         android:textColor="#121111"
@@ -124,7 +124,7 @@
     <EditText
         android:id="@+id/editTextNumber"
         android:layout_width="60dp"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_marginStart="30dp"
         android:gravity="center"
         android:inputType="number"
@@ -135,22 +135,24 @@
 
     <Button
         android:id="@+id/button_decrement"
-        android:layout_width="40dp"
+        android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginStart="30dp"
         android:layout_marginTop="160dp"
         android:text="-"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+        app:layout_constraintTop_toBottomOf="@+id/textView3"
+        tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/button_increment"
-        android:layout_width="40dp"
+        android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginStart="30dp"
         android:text="+"
         app:layout_constraintStart_toEndOf="@+id/editTextNumber"
-        app:layout_constraintTop_toTopOf="@+id/editTextNumber" />
+        app:layout_constraintTop_toTopOf="@+id/editTextNumber"
+        tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/button_update"
@@ -159,6 +161,18 @@
         android:layout_marginStart="25dp"
         android:text="OK"
         app:layout_constraintStart_toEndOf="@+id/button_increment"
-        app:layout_constraintTop_toTopOf="@+id/button_increment" />
+        app:layout_constraintTop_toTopOf="@+id/button_increment"
+        tools:ignore="HardcodedText" />
+
+    <ImageButton
+        android:id="@+id/imageButton"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:padding="10dp"
+        android:scaleType="centerInside"
+        android:contentDescription="Back Button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:srcCompat="@drawable/back_arrow"
+        tools:layout_editor_absoluteX="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
