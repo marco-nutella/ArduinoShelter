@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_temperature"
+        android:icon="@drawable/temperature"
+        android:title="@string/title_temperature" />
+
+    <item
+        android:id="@+id/navigation_radio"
+        android:icon="@drawable/radio"
+        android:title="@string/title_Radio" />
+
+    <item
+        android:id="@+id/navigation_alarm"
+        android:icon="@drawable/alarm_bell"
+        android:title="@string/title_alarm" />
+    <item
+        android:id="@+id/navigation_lights"
+        android:icon="@drawable/light_bulb"
+        android:title="@string/title_lights" />
+
+</menu>

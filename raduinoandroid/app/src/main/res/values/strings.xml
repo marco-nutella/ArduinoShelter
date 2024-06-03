@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Raduino</string>
+    <string name="title_temperature">Temperature</string>
+    <string name="title_Radio">Radio</string>
+    <string name="title_alarm">Alarm</string>
+    <string name="title_lights">Lights</string>
+</resources>
