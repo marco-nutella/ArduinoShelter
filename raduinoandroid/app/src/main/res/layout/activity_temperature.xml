@@ -69,7 +69,7 @@
         tools:ignore="HardcodedText" />
 
     <ImageButton
-        android:id="@+id/image_button"
+        android:id="@+id/emergency_button"
         android:layout_width="68dp"
         android:layout_height="62dp"
         android:background="@drawable/emergency_button"
@@ -90,7 +90,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/image_button"
+        app:layout_constraintTop_toBottomOf="@+id/emergency_button"
         tools:ignore="HardcodedText" />
 
     <TextView
@@ -165,7 +165,7 @@
         tools:ignore="HardcodedText" />
 
     <ImageButton
-        android:id="@+id/imageButton"
+        android:id="@+id/back_button"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:padding="10dp"
