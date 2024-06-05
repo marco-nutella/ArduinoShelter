@@ -22,21 +22,14 @@ import retrofit2.Response;
 
 
 public class TemperatureActivity extends AppCompatActivity {
-    BottomNavigationView button_nav_option;
-    private ImageButton buttonBack;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_temperature);
-        buttonBack = findViewById(R.id.back_button);
-        buttonBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(TemperatureActivity.this, MainActivity.class));
-            }
-        });
+        ImageButton buttonBack = findViewById(R.id.back_button);
+        buttonBack.setOnClickListener(v -> startActivity(new Intent(TemperatureActivity.this, MainActivity.class)));
 
 
 
