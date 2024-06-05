@@ -81,14 +81,29 @@ public class MainActivity extends AppCompatActivity {
         switchAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switchAlarm.setChecked(!switchAlarm.isChecked());
+                boolean isChecked = switchAlarm.isChecked();
+                if (isChecked) {
+                    // Switch is now checked
+                    //sendBluetoothMessage("Alarm ON 1");
+                } else {
+                    // Switch is now unchecked
+                    //sendBluetoothMessage("Alarm OFF 1");
+                }
             }
         });
 
         switchLights.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switchLights.setChecked(!switchLights.isChecked());
+
+                boolean isChecked = switchLights.isChecked();
+                if (isChecked) {
+                    // Switch is now checked
+                    //sendBluetoothMessage("Alarm ON 1");
+                } else {
+                    // Switch is now unchecked
+                    //sendBluetoothMessage("Alarm OFF 1");
+                }
             }
         });
 
