@@ -22,6 +22,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,7 +38,8 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button buttonTemperature, buttonRadio, buttonBT;
+    private Button buttonTemperature, buttonRadio;
+    private ImageButton buttonBT;
     private Switch switchAlarm, switchLights;
     private static final String TAG = "FrugalLogs";
     private static final int REQUEST_ENABLE_BT = 1;
