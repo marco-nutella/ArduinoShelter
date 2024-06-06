@@ -25,6 +25,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.annotation.RequiresApi;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     public static Handler handler;
     BluetoothDevice esp32BT = null;
     UUID arduinoUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //We declare a default UUID to create the global variable
+
     @RequiresApi(api = Build.VERSION_CODES.M)
 
     @Override
@@ -83,14 +85,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            //getLocation();
+            getLocation();
         } else {
             // Permission is not granted. You can choose to request it or skip the location functionality.
             Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show();
             // You can still proceed with other parts of your app without location
             // For example, initialize other views or components here
         }
-
 
 
         BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
@@ -185,11 +186,11 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         Log.d(TAG, "Bluetooth is enabled");
                     }
-                    Set < BluetoothDevice > pairedDevices = bluetoothAdapter.getBondedDevices();
+                    Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
 
                     if (pairedDevices.size() > 0) {
                         // There are paired devices. Get the name and address of each paired device.
-                        for (BluetoothDevice device: pairedDevices) {
+                        for (BluetoothDevice device : pairedDevices) {
                             String deviceName = device.getName();
                             String deviceHardwareAddress = device.getAddress(); // MAC address
                             Log.d(TAG, "deviceName:" + deviceName);
@@ -212,7 +213,9 @@ public class MainActivity extends AppCompatActivity {
                                                 ConnectedThread connectedThread = new ConnectedThread(btThread);
                                                 connectedThread.run();
                                             }
-                                        };
+                                        }
+
+                                        ;
                                     }).start();
                                 }
                             }
@@ -222,6 +225,48 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Button Pressed");
             }
         });
+    }
+
+
+    private void getLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            getAddressFromLocation(latitude, longitude);
+                        }
+                    }
+                });
+    }
+
+    private void getAddressFromLocation(double latitude, double longitude) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                String city = address.getLocality();
+                String region = address.getAdminArea();
+                String country = address.getCountryName();
+
+                // Save to SharedPreferences
+                SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("city", city);
+                editor.putString("region", region);
+                editor.putString("country", country);
+                editor.apply();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "Unable to get address from location", e);
+        }
     }
 }
 
