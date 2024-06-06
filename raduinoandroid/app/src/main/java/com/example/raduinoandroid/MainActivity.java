@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
+                Log.d(TAG, String.valueOf(msg));
                 switch (msg.what) {
                     case MessageConstants.MESSAGE_READ:
                         String arduinoMsg = msg.obj.toString(); // Read message from Arduino
@@ -175,13 +176,11 @@ public class MainActivity extends AppCompatActivity {
                         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                             Log.d(TAG, "We don't BT Permissions");
-                            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                            Log.d(TAG, "Bluetooth is enabled now");
                         } else {
                             Log.d(TAG, "We have BT Permissions");
-                            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                            Log.d(TAG, "Bluetooth is enabled now");
                         }
+                        startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                        Log.d(TAG, "Bluetooth is enabled now");
 
                     } else {
                         Log.d(TAG, "Bluetooth is enabled");
@@ -213,18 +212,17 @@ public class MainActivity extends AppCompatActivity {
                                                 ConnectedThread connectedThread = new ConnectedThread(btThread);
                                                 connectedThread.run();
                                             }
-                                        });
-                                    }
-                                }).start();
+                                        };
+                                    }).start();
+                                }
                             }
                         }
                     }
                 }
+                Log.d(TAG, "Button Pressed");
             }
-            Log.d(TAG, "Button Pressed");
-        }
-    });
-}
+        });
+    }
 }
 
 
