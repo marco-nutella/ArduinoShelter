@@ -2,15 +2,14 @@ package com.example.raduinoandroid;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 public class RadioActivity extends AppCompatActivity {
     int Volume = 20;
     private TextView editTextVolume;
+    private TextView editTextFrequency;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,7 +28,7 @@ public class RadioActivity extends AppCompatActivity {
         Button tuneUp = findViewById(R.id.up_button);
         Button tuneDown = findViewById(R.id.down_button);
         editTextVolume= findViewById(R.id.Volume_text);
-
+        editTextFrequency =  findViewById(R.id.frequency_text);
         ImageButton buttonBack = findViewById(R.id.back_button);
 
         ListView listView = findViewById(R.id.listView);
@@ -41,23 +41,36 @@ public class RadioActivity extends AppCompatActivity {
         RadioAdapter adapter = new RadioAdapter(this, R.layout.list_item, items);
         listView.setAdapter(adapter);
 
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Item clickedItem = (Item) parent.getItemAtPosition(position);
+            String text = "Radio: " + clickedItem.getVariable();
+            editTextFrequency.setText(text);
+            text = "Fm Channel " + clickedItem.getVariable();
+            //sendBluetoothMessage(text);
+        });
+
+
         tuneUp.setOnClickListener(v -> {
             String text = "Fm Up 1";
             //sendBluetoothMessage(text);
         });
-        tuneDown.setOnClickListener(v -> {Volume++;
+        tuneDown.setOnClickListener(v -> {
             String text = "Fm Down 1";
             //sendBluetoothMessage(text);
         });
 
-        decrementVolume.setOnClickListener(v -> {Volume--;
+        decrementVolume.setOnClickListener(v -> {
+            Volume--;
+            if(Volume <= 0){Volume = 0;}
             String text = "Volume: "+ Volume ;
             editTextVolume.setText(text);
             text = "Fm Volume " + Volume;
             //sendBluetoothMessage(text);
 
         });
-        incrementVolume.setOnClickListener(v -> {Volume++;
+        incrementVolume.setOnClickListener(v -> {
+            Volume++;
+            if(Volume >= 16){Volume = 15;}
             String text = "Volume: "+ Volume ;
             editTextVolume.setText(text);
             text = "Fm Volume " + Volume;

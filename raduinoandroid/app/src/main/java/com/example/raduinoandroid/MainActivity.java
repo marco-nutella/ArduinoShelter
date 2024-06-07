@@ -140,10 +140,10 @@ public class MainActivity extends AppCompatActivity {
                 boolean isChecked = switchLights.isChecked();
                 if (isChecked) {
                     // Switch is now checked
-                    //sendBluetoothMessage("Alarm ON 1");
+                    //sendBluetoothMessage("Lights ON 1");
                 } else {
                     // Switch is now unchecked
-                    //sendBluetoothMessage("Alarm OFF 1");
+                    //sendBluetoothMessage("Lights OFF 1");
                 }
             }
         });
