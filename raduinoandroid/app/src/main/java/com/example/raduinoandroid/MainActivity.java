@@ -13,6 +13,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -36,7 +37,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
-
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import java.util.concurrent.TimeUnit;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -46,7 +49,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -58,15 +60,18 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+
+
+
+
+
 public class MainActivity extends AppCompatActivity {
+    private static final int REQUEST_CALL_PHONE = 1;
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private FusedLocationProviderClient fusedLocationClient;
-    private Button buttonTemperature, buttonRadio;
-    private ImageButton buttonBT;
     private Switch switchAlarm, switchLights;
     private static final String TAG = "FrugalLogs";
     private static final int REQUEST_ENABLE_BT = 1;
@@ -82,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
+        schedulePeriodicWork();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             getLocation();
@@ -92,6 +97,10 @@ public class MainActivity extends AppCompatActivity {
             // You can still proceed with other parts of your app without location
             // For example, initialize other views or components here
         }
+
+        ImageButton callButton = findViewById(R.id.emergency_button);
+        callButton.setOnClickListener(v -> makePhoneCall());
+
 
 
         BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
@@ -113,117 +122,98 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        buttonTemperature = findViewById(R.id.button_temperature);
-        buttonRadio = findViewById(R.id.button_radio);
-        buttonBT = findViewById(R.id.button_bt);
+        Button buttonTemperature = findViewById(R.id.button_temperature);
+        Button buttonRadio = findViewById(R.id.button_radio);
+        ImageButton buttonBT = findViewById(R.id.button_bt);
         switchAlarm = findViewById(R.id.switch1);
         switchLights = findViewById(R.id.switch2);
 
-        switchAlarm.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean isChecked = switchAlarm.isChecked();
-                if (isChecked) {
-                    // Switch is now checked
-                    //sendBluetoothMessage("Alarm ON 1");
-                } else {
-                    // Switch is now unchecked
-                    //sendBluetoothMessage("Alarm OFF 1");
-                }
+        switchAlarm.setOnClickListener(v -> {
+            boolean isChecked = switchAlarm.isChecked();
+            if (isChecked) {
+                // Switch is now checked
+                //sendBluetoothMessage("Alarm ON 1");
+            } else {
+                // Switch is now unchecked
+                //sendBluetoothMessage("Alarm OFF 1");
             }
         });
 
-        switchLights.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        switchLights.setOnClickListener(v -> {
 
-                boolean isChecked = switchLights.isChecked();
-                if (isChecked) {
-                    // Switch is now checked
-                    //sendBluetoothMessage("Lights ON 1");
-                } else {
-                    // Switch is now unchecked
-                    //sendBluetoothMessage("Lights OFF 1");
-                }
+            boolean isChecked = switchLights.isChecked();
+            if (isChecked) {
+                // Switch is now checked
+                //sendBluetoothMessage("Lights ON 1");
+            } else {
+                // Switch is now unchecked
+                //sendBluetoothMessage("Lights OFF 1");
             }
         });
 
-        buttonTemperature.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, TemperatureActivity.class));
-            }
-        });
+        buttonTemperature.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, TemperatureActivity.class)));
 
-        buttonRadio.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, RadioActivity.class));
-            }
-        });
+        buttonRadio.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, RadioActivity.class)));
 
-        buttonBT.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Check if the phone supports BT
-                if (bluetoothAdapter == null) {
-                    // Device doesn't support Bluetooth
-                    Log.d(TAG, "Device doesn't support Bluetooth");
-                } else {
-                    Log.d(TAG, "Device support Bluetooth");
-                    //Check BT enabled. If disabled, we ask the user to enable BT
-                    if (!bluetoothAdapter.isEnabled()) {
-                        Log.d(TAG, "Bluetooth is disabled");
-                        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                            Log.d(TAG, "We don't BT Permissions");
-                        } else {
-                            Log.d(TAG, "We have BT Permissions");
-                        }
-                        startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                        Log.d(TAG, "Bluetooth is enabled now");
-
+        buttonBT.setOnClickListener(view -> {
+            //Check if the phone supports BT
+            if (bluetoothAdapter == null) {
+                // Device doesn't support Bluetooth
+                Log.d(TAG, "Device doesn't support Bluetooth");
+            } else {
+                Log.d(TAG, "Device support Bluetooth");
+                //Check BT enabled. If disabled, we ask the user to enable BT
+                if (!bluetoothAdapter.isEnabled()) {
+                    Log.d(TAG, "Bluetooth is disabled");
+                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "We don't BT Permissions");
                     } else {
-                        Log.d(TAG, "Bluetooth is enabled");
+                        Log.d(TAG, "We have BT Permissions");
                     }
-                    Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                    Log.d(TAG, "Bluetooth is enabled now");
 
-                    if (pairedDevices.size() > 0) {
-                        // There are paired devices. Get the name and address of each paired device.
-                        for (BluetoothDevice device : pairedDevices) {
-                            String deviceName = device.getName();
-                            String deviceHardwareAddress = device.getAddress(); // MAC address
-                            Log.d(TAG, "deviceName:" + deviceName);
-                            Log.d(TAG, "deviceHardwareAddress:" + deviceHardwareAddress);
+                } else {
+                    Log.d(TAG, "Bluetooth is enabled");
+                }
+                Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
 
-                            if (deviceName.equals("Raduino")) {
-                                Log.d(TAG, "Raduino found");
-                                arduinoUUID = device.getUuids()[0].getUuid();
-                                esp32BT = device;
-                                //ESP32 Found!
+                if (pairedDevices.size() > 0) {
+                    // There are paired devices. Get the name and address of each paired device.
+                    for (BluetoothDevice device : pairedDevices) {
+                        String deviceName = device.getName();
+                        String deviceHardwareAddress = device.getAddress(); // MAC address
+                        Log.d(TAG, "deviceName:" + deviceName);
+                        Log.d(TAG, "deviceHardwareAddress:" + deviceHardwareAddress);
 
-                                if (esp32BT != null) {
-                                    new Thread(new Runnable() {
-                                        public void run() {
-                                            BluetoothThread btThread = new BluetoothThread(esp32BT, arduinoUUID, handler);
-                                            btThread.run();
-                                            //Check if Socket connected
-                                            if (btThread.getMmSocket().isConnected()) {
-                                                Log.d(TAG, "Calling ConnectedThread class");
-                                                ConnectedThread connectedThread = new ConnectedThread(btThread);
-                                                connectedThread.run();
-                                            }
+                        if (deviceName.equals("Raduino")) {
+                            Log.d(TAG, "Raduino found");
+                            arduinoUUID = device.getUuids()[0].getUuid();
+                            esp32BT = device;
+                            //ESP32 Found!
+
+                            if (esp32BT != null) {
+                                new Thread(new Runnable() {
+                                    public void run() {
+                                        BluetoothThread btThread = new BluetoothThread(esp32BT, arduinoUUID, handler);
+                                        btThread.run();
+                                        //Check if Socket connected
+                                        if (btThread.getMmSocket().isConnected()) {
+                                            Log.d(TAG, "Calling ConnectedThread class");
+                                            ConnectedThread connectedThread = new ConnectedThread(btThread);
+                                            connectedThread.run();
                                         }
+                                    }
 
-                                        ;
-                                    }).start();
-                                }
+                                    ;
+                                }).start();
                             }
                         }
                     }
                 }
-                Log.d(TAG, "Button Pressed");
             }
+            Log.d(TAG, "Button Pressed");
         });
     }
 
@@ -233,14 +223,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (location != null) {
-                            double latitude = location.getLatitude();
-                            double longitude = location.getLongitude();
-                            getAddressFromLocation(latitude, longitude);
-                        }
+                .addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+                        getAddressFromLocation(latitude, longitude);
                     }
                 });
     }
@@ -268,7 +255,53 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Unable to get address from location", e);
         }
     }
+
+    private void makePhoneCall() {
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL_PHONE);
+        } else {
+            startCall();
+        }
+    }
+
+    private void startCall() {
+        // Access the SharedPreferences
+        SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+
+        // Retrieve the values
+        String city = sharedPref.getString("city", "Default City");
+        String region = sharedPref.getString("region", "Default Region");
+        String country = sharedPref.getString("country", "Default Country");
+
+        Intent callIntent = new Intent(Intent.ACTION_CALL);
+        // Replace with your phone number
+        String phoneNumber = "969787598";
+        callIntent.setData(Uri.parse("tel:" + phoneNumber));
+        startActivity(callIntent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CALL_PHONE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCall();
+            } else {
+                // Permission denied
+            }
+        }
+    }
+
+    private void schedulePeriodicWork() {
+        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(TimerCall.class, 5, TimeUnit.MINUTES)
+                .build();
+
+        WorkManager.getInstance(this).enqueue(periodicWorkRequest);
+    }
+
 }
+
+
 
 
 
