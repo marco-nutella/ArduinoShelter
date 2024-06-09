@@ -72,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 1;
     //We will use a Handler to get the BT Connection statys
     public static Handler handler;
+    public BluetoothThread btThread = null;
+    public ConnectedThread connectedThread = null;
+
     BluetoothDevice esp32BT = null;
     UUID arduinoUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //We declare a default UUID to create the global variable
 
@@ -135,14 +138,21 @@ public class MainActivity extends AppCompatActivity {
         });
 
         switchLights.setOnClickListener(v -> {
-
             boolean isChecked = switchLights.isChecked();
             if (isChecked) {
                 // Switch is now checked
-                //sendBluetoothMessage("Lights ON 1");
+                try {
+                    sendBluetoothMessage("Lights ON 1");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 // Switch is now unchecked
-                //sendBluetoothMessage("Lights OFF 1");
+                try {
+                    sendBluetoothMessage("Lights OFF 1");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
@@ -191,26 +201,15 @@ public class MainActivity extends AppCompatActivity {
                             if (esp32BT != null) {
                                 new Thread(new Runnable() {
                                     public void run() {
-                                        BluetoothThread btThread = new BluetoothThread(esp32BT, arduinoUUID, handler);
+                                        btThread = new BluetoothThread(esp32BT, arduinoUUID, handler);
                                         btThread.run();
                                         //Check if Socket connected
                                         if (btThread.getMmSocket().isConnected()) {
                                             Log.d(TAG, "Calling ConnectedThread class");
                                             Log.d(TAG, deviceName);
-                                            ConnectedThread connectedThread = new ConnectedThread(btThread);
+                                            connectedThread = new ConnectedThread(btThread);
                                             connectedThread.run();
-                                            try {
-                                                connectedThread.write("suastringaqui".getBytes("UTF-8"));
-                                            } catch (UnsupportedEncodingException e) {
-                                                throw new RuntimeException(e);
-                                            }
-
                                         }
-                                    }
-
-                                    public void sendBluetoothMessage(String message){
-                                        
-                                        connectedThread.write(message.getBytes("UTF-8"));
                                     }
                                 }).start();
                             }
@@ -220,6 +219,12 @@ public class MainActivity extends AppCompatActivity {
             }
             Log.d(TAG, "Button Pressed");
         });
+    }
+
+    public void sendBluetoothMessage(String message) throws UnsupportedEncodingException {
+        if (connectedThread != null) {
+            connectedThread.write(message.getBytes("UTF-8"));
+        }
     }
 
 
