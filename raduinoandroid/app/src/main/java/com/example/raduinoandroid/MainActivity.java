@@ -70,8 +70,8 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CALL_PHONE = 1;
-    private static final int REQUEST_LOCATION_PERMISSION = 1;
     private FusedLocationProviderClient fusedLocationClient;
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch switchAlarm, switchLights;
     private static final String TAG = "FrugalLogs";
     private static final int REQUEST_ENABLE_BT = 1;
@@ -205,8 +205,6 @@ public class MainActivity extends AppCompatActivity {
                                             connectedThread.run();
                                         }
                                     }
-
-                                    ;
                                 }).start();
                             }
                         }
