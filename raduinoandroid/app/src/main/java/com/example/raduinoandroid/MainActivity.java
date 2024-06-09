@@ -35,6 +35,7 @@ import androidx.core.app.ActivityCompat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Set;
 import java.util.UUID;
 import androidx.work.PeriodicWorkRequest;
@@ -63,6 +64,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CALL_PHONE = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private FusedLocationProviderClient fusedLocationClient;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch switchAlarm, switchLights;
@@ -81,14 +83,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         schedulePeriodicWork();
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             getLocation();
         } else {
-            // Permission is not granted. You can choose to request it or skip the location functionality.
-            Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show();
-            // You can still proceed with other parts of your app without location
-            // For example, initialize other views or components here
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
         }
 
         ImageButton callButton = findViewById(R.id.emergency_button);
@@ -194,9 +196,21 @@ public class MainActivity extends AppCompatActivity {
                                         //Check if Socket connected
                                         if (btThread.getMmSocket().isConnected()) {
                                             Log.d(TAG, "Calling ConnectedThread class");
+                                            Log.d(TAG, deviceName);
                                             ConnectedThread connectedThread = new ConnectedThread(btThread);
                                             connectedThread.run();
+                                            try {
+                                                connectedThread.write("suastringaqui".getBytes("UTF-8"));
+                                            } catch (UnsupportedEncodingException e) {
+                                                throw new RuntimeException(e);
+                                            }
+
                                         }
+                                    }
+
+                                    public void sendBluetoothMessage(String message){
+                                        
+                                        connectedThread.write(message.getBytes("UTF-8"));
                                     }
                                 }).start();
                             }
@@ -276,6 +290,8 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CALL_PHONE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                Log.d("Tag", String.valueOf(requestCode));
                 startCall();
             } else {
                 // Permission denied
