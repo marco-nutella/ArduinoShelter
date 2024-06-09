@@ -223,7 +223,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendBluetoothMessage(String message) throws UnsupportedEncodingException {
         if (connectedThread != null) {
+            message = message+"\n";
             connectedThread.write(message.getBytes("UTF-8"));
+            int banana=0;
+            int benene=1;
         }
     }
 
