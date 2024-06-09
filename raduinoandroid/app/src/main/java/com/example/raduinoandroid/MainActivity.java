@@ -130,10 +130,18 @@ public class MainActivity extends AppCompatActivity {
             boolean isChecked = switchAlarm.isChecked();
             if (isChecked) {
                 // Switch is now checked
-                //sendBluetoothMessage("Alarm ON 1");
+                try {
+                    sendBluetoothMessage("Alarm ON 1");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 // Switch is now unchecked
-                //sendBluetoothMessage("Alarm OFF 1");
+                try {
+                    sendBluetoothMessage("Alarm OFF 1");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 

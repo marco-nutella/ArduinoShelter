@@ -34,9 +34,30 @@ public class RadioActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.listView);
 
         ArrayList<Item> items = new ArrayList<>();
-        items.add(new Item("Item 1", 10));
-        items.add(new Item("Item 2", 20));
-        items.add(new Item("Item 3", 30));
+        items.add(new Item("Ultra FM ", 882));
+        items.add(new Item("TSF ", 895));
+        items.add(new Item("SBSR ", 904));
+        items.add(new Item("Radio Clube de Sintra ", 912));
+        items.add(new Item("Cidade FM ", 916));
+        items.add(new Item("Radio Amalia ", 920));
+        items.add(new Item("Mega Hits FM ", 924));
+        items.add(new Item("RFM ", 932));
+        items.add(new Item("Antena 2 ", 944));
+        items.add(new Item("Kiss ", 950));
+        items.add(new Item("Radio Valdevez ", 964));
+        items.add(new Item("Radio Commercial ", 974));
+        items.add(new Item("Marginal ", 981));
+        items.add(new Item("Radio Meo Sudoeste ", 1008));
+        items.add(new Item("Radio Saturno ", 1016));
+        items.add(new Item("Radio Orbital ", 1019));
+        items.add(new Item("Radio Sim ", 1022));
+        items.add(new Item("Oxigenio ", 1026));
+        items.add(new Item("Smooth FM ", 1030));
+        items.add(new Item("Radio Renascenca ", 1034));
+        items.add(new Item("M80 ", 1043));
+        items.add(new Item("Radio Cascais ", 1054));
+        items.add(new Item("Vadafone FM ", 1072));
+
 
         RadioAdapter adapter = new RadioAdapter(this, R.layout.list_item, items);
         listView.setAdapter(adapter);
