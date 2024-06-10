@@ -23,8 +23,8 @@ import android.os.IBinder;
 
 public class RadioActivity extends AppCompatActivity {
 
-    private RaduinoApp ra = (RaduinoApp) getApplicationContext();
-    private BluetoothService bluetoothService = ra.getBluetoothService();
+    private RaduinoApp ra;
+    private BluetoothService bluetoothService;
     private boolean isBound = false;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -53,6 +53,9 @@ public class RadioActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_radio);
+        ra = (RaduinoApp) getApplicationContext();
+        bluetoothService = ra.getBluetoothService();
+
 
         Intent intent = new Intent(this, BluetoothService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);

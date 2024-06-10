@@ -48,11 +48,15 @@ public class BluetoothService extends Service {
     }
 
     public void startBluetoothConnection(Activity activity, Handler handler) {
+        RaduinoApp ra = (RaduinoApp) getApplicationContext();
+        if (ra.getBluetoothService() != null) {
+            Log.d(TAG, "YOU DUMDUM THERE WAS ALREADY A CONNECTION");
+            return;
+        }
         if (bluetoothAdapter == null) {
             Log.d(TAG, "Device doesn't support Bluetooth");
             return;
         }
-
         if (!bluetoothAdapter.isEnabled()) {
             Log.d(TAG, "Bluetooth is disabled");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -97,7 +101,6 @@ public class BluetoothService extends Service {
                 }
             }
         }
-        RaduinoApp ra = (RaduinoApp) getApplicationContext();
         ra.setBluetoothService(this);
     }
 

@@ -10,7 +10,7 @@
 
     <TextView
         android:id="@+id/textView7"
-        android:layout_width="97dp"
+        android:layout_width="105dp"
         android:layout_height="32dp"
         android:layout_marginStart="178dp"
         android:layout_marginTop="20dp"
@@ -30,9 +30,11 @@
         android:layout_marginStart="50dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="50dp"
+        android:layout_marginBottom="5dp"
         android:background="@drawable/roundedbutton"
         android:contentDescription="bluetooth connect button"
         android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/back_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
@@ -95,7 +97,7 @@
 
     <TextView
         android:id="@+id/temperature_text"
-        android:layout_width="250dp"
+        android:layout_width="300dp"
         android:layout_height="40dp"
         android:layout_marginStart="30dp"
         android:layout_marginTop="30dp"
@@ -109,7 +111,7 @@
 
     <TextView
         android:id="@+id/max_temperature_text"
-        android:layout_width="250dp"
+        android:layout_width="300dp"
         android:layout_height="40dp"
         android:layout_marginStart="30dp"
         android:layout_marginTop="90dp"
