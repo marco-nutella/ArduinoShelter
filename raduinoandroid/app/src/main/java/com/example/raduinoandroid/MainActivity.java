@@ -1,7 +1,3 @@
-// Bluetooth functionality adapted from: https://github.com/The-Frugal-Engineer/ArduinoBTExamplev3/blob/main/app/src/main/java/com/sarmale/arduinobtexample_v3/MainActivity.java
-// https://www.youtube.com/watch?v=aE8EbDmrUfQ
-
-
 package com.example.raduinoandroid;
 
 import android.Manifest;
@@ -15,65 +11,51 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
-import android.widget.TextView;
-
-import androidx.appcompat.app.AppCompatActivity;
-
-import androidx.annotation.RequiresApi;
-import androidx.core.app.ActivityCompat;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Set;
-import java.util.UUID;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-import java.util.concurrent.TimeUnit;
-import android.content.SharedPreferences;
-import android.location.Address;
-import android.location.Geocoder;
 
 import androidx.annotation.NonNull;
-
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
-
-
-
+import android.content.SharedPreferences;
+import android.location.Address;
+import android.location.Geocoder;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
-
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CALL_PHONE = 1;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int BLUETOOTH_PERMISSION_REQUEST_CODE = 2;
+
     private FusedLocationProviderClient fusedLocationClient;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch switchAlarm, switchLights;
     private static final String TAG = "FrugalLogs";
 
-    //We will use a Handler to get the BT Connection statys
+    // We will use a Handler to get the BT Connection status
     public static Handler handler;
 
-
     @RequiresApi(api = Build.VERSION_CODES.M)
-
     private BluetoothService bluetoothService;
     private boolean isBound = false;
 
@@ -92,8 +74,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         schedulePeriodicWork();
         Intent intent = new Intent(this, BluetoothService.class);
+
+        // Request necessary permissions
+        requestBluetoothPermissions();
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -114,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
 
         ImageButton callButton = findViewById(R.id.emergency_button);
         callButton.setOnClickListener(v -> makePhoneCall());
-
 
         handler = new Handler(Looper.getMainLooper()) {
             @Override
@@ -131,8 +113,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-
-
 
         Button buttonTemperature = findViewById(R.id.button_temperature);
         Button buttonRadio = findViewById(R.id.button_radio);
@@ -189,10 +169,14 @@ public class MainActivity extends AppCompatActivity {
         buttonBT.setOnClickListener(view -> {
             if (isBound) {
                 bluetoothService.startBluetoothConnection(handler);
+            } else {
+                bluetoothService.startBluetoothConnection(handler);
             }
-            Log.d(TAG, "Button Pressed");});
+            Log.d(TAG, "Button Pressed");
+        });
     }
 
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (isBound) {
@@ -208,7 +192,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         fusedLocationClient.getLastLocation()
@@ -269,30 +254,58 @@ public class MainActivity extends AppCompatActivity {
         startActivity(callIntent);
     }
 
+    private void requestBluetoothPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                        BLUETOOTH_PERMISSION_REQUEST_CODE);
+            } else {
+                Log.d(TAG, "Bluetooth permissions already granted for Android 12+.");
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN},
+                        BLUETOOTH_PERMISSION_REQUEST_CODE);
+            } else {
+                Log.d(TAG, "Bluetooth permissions already granted for below Android 12.");
+            }
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CALL_PHONE) {
+        if (requestCode == BLUETOOTH_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                Log.d("Tag", String.valueOf(requestCode));
+                Log.d(TAG, "Bluetooth permissions granted.");
+            } else {
+                Log.e(TAG, "Bluetooth permissions denied.");
+                // Optionally, you can re-request the permission or inform the user.
+            }
+        } else if (requestCode == REQUEST_CALL_PHONE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Call permissions granted.");
                 startCall();
             } else {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL_PHONE);
+                Log.e(TAG, "Call permissions denied.");
+            }
+        } else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Location permissions granted.");
+                getLocation();
+            } else {
+                Log.e(TAG, "Location permissions denied.");
             }
         }
     }
 
     private void schedulePeriodicWork() {
-        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(TimerCall.class, 5, TimeUnit.MINUTES)
+        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(TimerCall.class, 15, TimeUnit.MINUTES)
                 .build();
-
         WorkManager.getInstance(this).enqueue(periodicWorkRequest);
     }
-
 }
-
-
-
-
-

@@ -60,7 +60,7 @@ public class BluetoothService extends Service {
         }
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            return;
+            Log.d(TAG, "NEED PERMISSION");
         }
         Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
         if (pairedDevices.size() > 0) {

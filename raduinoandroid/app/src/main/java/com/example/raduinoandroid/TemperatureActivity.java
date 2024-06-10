@@ -2,31 +2,29 @@ package com.example.raduinoandroid;
 
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-
-import androidx.appcompat.app.AppCompatActivity;
-
-
-import java.util.ArrayList;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
+import java.io.UnsupportedEncodingException;
 
 
 public class TemperatureActivity extends AppCompatActivity {
@@ -35,10 +33,42 @@ public class TemperatureActivity extends AppCompatActivity {
     private EditText editTextNumber;
 
     private TextView maxTemperatureText;
+
+    private static final String TAG = "FrugalLogs";
+
+    //We will use a Handler to get the BT Connection statys
+    public static Handler handler;
+
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+
+    private BluetoothService bluetoothService;
+    private boolean isBound = false;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            bluetoothService = binder.getService();
+            isBound = true;
+            initializeBluetooth();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_temperature);
+
+        Intent intent = new Intent(this, BluetoothService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+
         ImageButton buttonBack = findViewById(R.id.back_button);
         switchVentilation = findViewById(R.id.switch_ventilation);
         switchAutoVentilation = findViewById(R.id.switch_auto_ventilation);
@@ -52,31 +82,50 @@ public class TemperatureActivity extends AppCompatActivity {
 
 
         switchVentilation.setOnClickListener(v -> {
-                boolean isChecked = switchVentilation.isChecked();
-                if (isChecked) {
-                    // Switch is now checked
-                    //sendBluetoothMessage("Ventilation ON 1");
-                } else {
-                    // Switch is now unchecked
-                    //sendBluetoothMessage("Ventilation OFF 1");
+            boolean isChecked = switchVentilation.isChecked();
+            if (isChecked) {
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("Ventilation ON 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
+            } else {
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("Ventilation OFF 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         });
 
         switchAutoVentilation.setOnClickListener(v -> {
             boolean isChecked = switchAutoVentilation.isChecked();
             if (isChecked) {
-                // Switch is now checked
-                //sendBluetoothMessage("AutoVentilation ON 1");
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("AutoVentilation ON 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             } else {
-                // Switch is now unchecked
-                //sendBluetoothMessage("AutoVentilation OFF 1");
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("AutoVentilation OFF 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
         });
 
 
-
-
-        decreementTemperature.setOnClickListener(v -> {maxTemperature--;
+        decreementTemperature.setOnClickListener(v -> {
+            maxTemperature--;
             editTextNumber.setText(String.valueOf(maxTemperature));
         });
 
@@ -85,10 +134,12 @@ public class TemperatureActivity extends AppCompatActivity {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // Not used
             }
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 // Not used
             }
+
             @Override
             public void afterTextChanged(Editable s) {
                 String text = s.toString();
@@ -101,40 +152,47 @@ public class TemperatureActivity extends AppCompatActivity {
             }
         });
 
-        incrementTemperature.setOnClickListener(v -> {maxTemperature++;
+        incrementTemperature.setOnClickListener(v -> {
+            maxTemperature++;
             editTextNumber.setText(String.valueOf(maxTemperature));
         });
 
         confirmButton.setOnClickListener(v -> {
-            String text = "Max Temperature: "+ maxTemperature + " C";
+            String text = "Max Temperature: " + maxTemperature + " C";
 
             maxTemperatureText.setText(text);
             text = "Temperature MaxTemperature " + maxTemperature;
-            //sendBluetoothMessage(text);
+            if (isBound) {
+                try {
+                    bluetoothService.sendBluetoothMessage(text);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         });
 
+        ImageButton buttonBT = findViewById(R.id.button_bt);
+        buttonBT.setOnClickListener(view -> {
+            if (isBound) {
+                bluetoothService.startBluetoothConnection(handler);
+            }
+            Log.d(TAG, "Button Pressed");
+        });
 
         buttonBack.setOnClickListener(v -> startActivity(new Intent(TemperatureActivity.this, MainActivity.class)));
     }
+
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isBound) {
+            unbindService(serviceConnection);
+            isBound = false;
+        }
+    }
+
+    private void initializeBluetooth() {
+        if (isBound) {
+            bluetoothService.startBluetoothConnection(handler);
+        }
+    }
 }
-
-/* info = new Info("no_id", 10, 20, 20.0, 30.0);
-        try {
-            RetrofitInfoInterface aa =
-                    RetrofitService.getRetrofit().create(RetrofitInfoInterface.class);
-            Log.e(TAG, "MOMMENT OF COCAINE: YIASDDKJASHDUIASI");
-            aa.GetAll().enqueue(new Callback<ArrayList<Info>>() {
-                @Override
-                public void onResponse(Call<ArrayList<Info>> call, Response<ArrayList<Info>> response) {
-                    infe = response.body();
-                }
-
-                @Override
-                public void onFailure(Call<ArrayList<Info>> call, Throwable t) {
-                    Log.e(TAG, "onFailure: " + t.getMessage());
-                }
-            });
-
-        } catch (Exception e) {
-            System.out.println(e);
-        }*/

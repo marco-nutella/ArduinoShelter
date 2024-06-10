@@ -100,7 +100,13 @@ public class RadioActivity extends AppCompatActivity {
             String text = "Radio: " + clickedItem.getVariable();
             editTextFrequency.setText(text);
             text = "Fm Channel " + clickedItem.getVariable();
-            //sendBluetoothMessage(text);
+            if (isBound) {
+                try {
+                    bluetoothService.sendBluetoothMessage(text);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         });
 
 
