@@ -168,9 +168,9 @@ public class MainActivity extends AppCompatActivity {
 
         buttonBT.setOnClickListener(view -> {
             if (isBound) {
-                bluetoothService.startBluetoothConnection(handler);
+                bluetoothService.startBluetoothConnection(this,handler);
             } else {
-                bluetoothService.startBluetoothConnection(handler);
+                bluetoothService.startBluetoothConnection(this,handler);
             }
             Log.d(TAG, "Button Pressed");
         });
@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeBluetooth() {
         if (isBound) {
-            bluetoothService.startBluetoothConnection(handler);
+            bluetoothService.startBluetoothConnection(this, handler);
         }
     }
 

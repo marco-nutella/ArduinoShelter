@@ -193,7 +193,7 @@ public class RadioActivity extends AppCompatActivity {
 
     private void initializeBluetooth() {
         if (isBound) {
-            bluetoothService.startBluetoothConnection(handler);
+            bluetoothService.startBluetoothConnection(this,handler);
         }
     }
 

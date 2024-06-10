@@ -174,7 +174,7 @@ public class TemperatureActivity extends AppCompatActivity {
         ImageButton buttonBT = findViewById(R.id.button_bt);
         buttonBT.setOnClickListener(view -> {
             if (isBound) {
-                bluetoothService.startBluetoothConnection(handler);
+                bluetoothService.startBluetoothConnection(this,handler);
             }
             Log.d(TAG, "Button Pressed");
         });
@@ -192,7 +192,7 @@ public class TemperatureActivity extends AppCompatActivity {
 
     private void initializeBluetooth() {
         if (isBound) {
-            bluetoothService.startBluetoothConnection(handler);
+            bluetoothService.startBluetoothConnection(this,handler);
         }
     }
 }

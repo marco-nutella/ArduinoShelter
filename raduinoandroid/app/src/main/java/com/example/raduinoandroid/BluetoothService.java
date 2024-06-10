@@ -1,5 +1,8 @@
 package com.example.raduinoandroid;
 
+import static androidx.core.app.ActivityCompat.startActivityForResult;
+
+import android.app.Activity;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -19,6 +22,7 @@ import java.util.UUID;
 
 public class BluetoothService extends Service {
     private static final String TAG = "BluetoothService";
+    private static final int REQUEST_ENABLE_BT = 1;
     private final IBinder binder = new LocalBinder();
     public BluetoothThread btThread = null;
     public ConnectedThread connectedThread = null;
@@ -43,7 +47,7 @@ public class BluetoothService extends Service {
         bluetoothAdapter = bluetoothManager.getAdapter();
     }
 
-    public void startBluetoothConnection(Handler handler) {
+    public void startBluetoothConnection(Activity activity, Handler handler) {
         if (bluetoothAdapter == null) {
             Log.d(TAG, "Device doesn't support Bluetooth");
             return;
@@ -52,8 +56,8 @@ public class BluetoothService extends Service {
         if (!bluetoothAdapter.isEnabled()) {
             Log.d(TAG, "Bluetooth is disabled");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            enableBtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(enableBtIntent);
+            //enableBtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivityForResult(activity, enableBtIntent, REQUEST_ENABLE_BT,null);
             Log.d(TAG, "Bluetooth is enabled now");
         } else {
             Log.d(TAG, "Bluetooth is enabled");
@@ -61,6 +65,7 @@ public class BluetoothService extends Service {
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "NEED PERMISSION");
+
         }
         Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
         if (pairedDevices.size() > 0) {
@@ -75,12 +80,19 @@ public class BluetoothService extends Service {
                     UUID arduinoUUID = device.getUuids()[0].getUuid();
 
                     if (device != null) {
-                        btThread = new BluetoothThread(device, arduinoUUID, handler);
-                        new Thread(btThread).start();
-                        if (btThread.getMmSocket().isConnected()) {
-                            connectedThread = new ConnectedThread(btThread);
-                            new Thread(connectedThread).start();
-                        }
+                        new Thread(new Runnable() {
+                            public void run() {
+                                btThread = new BluetoothThread(device, arduinoUUID, handler);
+                                btThread.run();
+                                //Check if Socket connected
+                                if (btThread.getMmSocket().isConnected()) {
+                                    Log.d(TAG, "Calling ConnectedThread class");
+                                    Log.d(TAG, deviceName);
+                                    connectedThread = new ConnectedThread(btThread);
+                                    connectedThread.run();
+                                }
+                            }
+                        }).start();
                     }
                 }
             }
