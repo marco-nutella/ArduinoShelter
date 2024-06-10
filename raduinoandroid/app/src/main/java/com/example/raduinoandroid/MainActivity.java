@@ -6,10 +6,6 @@ package com.example.raduinoandroid;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -43,8 +39,7 @@ import androidx.work.WorkManager;
 import java.util.concurrent.TimeUnit;
 import android.content.SharedPreferences;
 import android.location.Address;
-import android.location.Geocoder;;
-import android.widget.Toast;
+import android.location.Geocoder;
 
 import androidx.annotation.NonNull;
 
@@ -60,6 +55,9 @@ import java.util.Locale;
 
 
 
+import android.content.ComponentName;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -69,16 +67,32 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch switchAlarm, switchLights;
     private static final String TAG = "FrugalLogs";
-    private static final int REQUEST_ENABLE_BT = 1;
+
     //We will use a Handler to get the BT Connection statys
     public static Handler handler;
-    public BluetoothThread btThread = null;
-    public ConnectedThread connectedThread = null;
 
-    BluetoothDevice esp32BT = null;
-    UUID arduinoUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //We declare a default UUID to create the global variable
 
     @RequiresApi(api = Build.VERSION_CODES.M)
+
+    private BluetoothService bluetoothService;
+    private boolean isBound = false;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            bluetoothService = binder.getService();
+            isBound = true;
+            initializeBluetooth();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         schedulePeriodicWork();
+        Intent intent = new Intent(this, BluetoothService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -99,10 +115,6 @@ public class MainActivity extends AppCompatActivity {
         ImageButton callButton = findViewById(R.id.emergency_button);
         callButton.setOnClickListener(v -> makePhoneCall());
 
-
-
-        BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
-        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
 
         handler = new Handler(Looper.getMainLooper()) {
             @Override
@@ -120,6 +132,8 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+
+
         Button buttonTemperature = findViewById(R.id.button_temperature);
         Button buttonRadio = findViewById(R.id.button_radio);
         ImageButton buttonBT = findViewById(R.id.button_bt);
@@ -129,18 +143,20 @@ public class MainActivity extends AppCompatActivity {
         switchAlarm.setOnClickListener(v -> {
             boolean isChecked = switchAlarm.isChecked();
             if (isChecked) {
-                // Switch is now checked
-                try {
-                    sendBluetoothMessage("Alarm ON 1");
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("Alarm ON 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             } else {
-                // Switch is now unchecked
-                try {
-                    sendBluetoothMessage("Alarm OFF 1");
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("Alarm OFF 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         });
@@ -148,18 +164,20 @@ public class MainActivity extends AppCompatActivity {
         switchLights.setOnClickListener(v -> {
             boolean isChecked = switchLights.isChecked();
             if (isChecked) {
-                // Switch is now checked
-                try {
-                    sendBluetoothMessage("Lights ON 1");
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("Lights ON 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             } else {
-                // Switch is now unchecked
-                try {
-                    sendBluetoothMessage("Lights OFF 1");
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
+                if (isBound) {
+                    try {
+                        bluetoothService.sendBluetoothMessage("Lights OFF 1");
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         });
@@ -169,73 +187,25 @@ public class MainActivity extends AppCompatActivity {
         buttonRadio.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, RadioActivity.class)));
 
         buttonBT.setOnClickListener(view -> {
-            //Check if the phone supports BT
-            if (bluetoothAdapter == null) {
-                // Device doesn't support Bluetooth
-                Log.d(TAG, "Device doesn't support Bluetooth");
-            } else {
-                Log.d(TAG, "Device support Bluetooth");
-                //Check BT enabled. If disabled, we ask the user to enable BT
-                if (!bluetoothAdapter.isEnabled()) {
-                    Log.d(TAG, "Bluetooth is disabled");
-                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                        Log.d(TAG, "We don't BT Permissions");
-                    } else {
-                        Log.d(TAG, "We have BT Permissions");
-                    }
-                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                    Log.d(TAG, "Bluetooth is enabled now");
-
-                } else {
-                    Log.d(TAG, "Bluetooth is enabled");
-                }
-                Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-
-                if (pairedDevices.size() > 0) {
-                    // There are paired devices. Get the name and address of each paired device.
-                    for (BluetoothDevice device : pairedDevices) {
-                        String deviceName = device.getName();
-                        String deviceHardwareAddress = device.getAddress(); // MAC address
-                        Log.d(TAG, "deviceName:" + deviceName);
-                        Log.d(TAG, "deviceHardwareAddress:" + deviceHardwareAddress);
-
-                        if (deviceName.equals("Raduino")) {
-                            Log.d(TAG, "Raduino found");
-                            arduinoUUID = device.getUuids()[0].getUuid();
-                            esp32BT = device;
-                            //ESP32 Found!
-
-                            if (esp32BT != null) {
-                                new Thread(new Runnable() {
-                                    public void run() {
-                                        btThread = new BluetoothThread(esp32BT, arduinoUUID, handler);
-                                        btThread.run();
-                                        //Check if Socket connected
-                                        if (btThread.getMmSocket().isConnected()) {
-                                            Log.d(TAG, "Calling ConnectedThread class");
-                                            Log.d(TAG, deviceName);
-                                            connectedThread = new ConnectedThread(btThread);
-                                            connectedThread.run();
-                                        }
-                                    }
-                                }).start();
-                            }
-                        }
-                    }
-                }
+            if (isBound) {
+                bluetoothService.startBluetoothConnection(handler);
             }
-            Log.d(TAG, "Button Pressed");
-        });
+            Log.d(TAG, "Button Pressed");});
     }
 
-    public void sendBluetoothMessage(String message) throws UnsupportedEncodingException {
-        if (connectedThread != null) {
-            message = message+"\n";
-            connectedThread.write(message.getBytes("UTF-8"));
-    }
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isBound) {
+            unbindService(serviceConnection);
+            isBound = false;
+        }
     }
 
+    private void initializeBluetooth() {
+        if (isBound) {
+            bluetoothService.startBluetoothConnection(handler);
+        }
+    }
 
     private void getLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -308,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Tag", String.valueOf(requestCode));
                 startCall();
             } else {
-                // Permission denied
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL_PHONE);
             }
         }
     }

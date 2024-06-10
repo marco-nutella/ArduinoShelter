@@ -2,19 +2,48 @@ package com.example.raduinoandroid;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.AdapterView;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
-
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.ServiceConnection;
+import android.os.Handler;
+import android.os.IBinder;
 
 
 public class RadioActivity extends AppCompatActivity {
+
+    private BluetoothService bluetoothService;
+    private boolean isBound = false;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            bluetoothService = binder.getService();
+            isBound = true;
+            initializeBluetooth();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+        }
+    };
+
+
+    public static Handler handler;
+    private static final String TAG = "FrugalLogs";
     int Volume = 20;
     private TextView editTextVolume;
     private TextView editTextFrequency;
@@ -23,6 +52,10 @@ public class RadioActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_radio);
+
+        Intent intent = new Intent(this, BluetoothService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+
         Button incrementVolume = findViewById(R.id.button_increment);
         Button decrementVolume = findViewById(R.id.button_decrement);
         Button tuneUp = findViewById(R.id.up_button);
@@ -73,12 +106,22 @@ public class RadioActivity extends AppCompatActivity {
 
         tuneUp.setOnClickListener(v -> {
             String text = "Fm Up 1";
-            //sendBluetoothMessage(text);
-        });
+            if (isBound) {
+                try {
+                    bluetoothService.sendBluetoothMessage(text);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }        });
         tuneDown.setOnClickListener(v -> {
             String text = "Fm Down 1";
-            //sendBluetoothMessage(text);
-        });
+            if (isBound) {
+                try {
+                    bluetoothService.sendBluetoothMessage(text);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }        });
 
         decrementVolume.setOnClickListener(v -> {
             Volume--;
@@ -86,7 +129,13 @@ public class RadioActivity extends AppCompatActivity {
             String text = "Volume: "+ Volume ;
             editTextVolume.setText(text);
             text = "Fm Volume " + Volume;
-            //sendBluetoothMessage(text);
+            if (isBound) {
+                try {
+                    bluetoothService.sendBluetoothMessage(text);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
         });
         incrementVolume.setOnClickListener(v -> {
@@ -95,15 +144,55 @@ public class RadioActivity extends AppCompatActivity {
             String text = "Volume: "+ Volume ;
             editTextVolume.setText(text);
             text = "Fm Volume " + Volume;
-            //sendBluetoothMessage(text);
+            if (isBound) {
+                try {
+                    bluetoothService.sendBluetoothMessage(text);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
         });
 
+        handler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                Log.d(TAG, String.valueOf(msg));
+                switch (msg.what) {
+                    case MessageConstants.MESSAGE_READ:
+                        String arduinoMsg = msg.obj.toString(); // Read message from Arduino
+                        break;
+                    case MessageConstants.MESSAGE_WRITE:
+                        break;
+                    case MessageConstants.MESSAGE_ERROR:
+                        break;
+                }
+            }
+        };
 
 
 
         buttonBack.setOnClickListener(v -> startActivity(new Intent(RadioActivity.this, MainActivity.class)));
 
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isBound) {
+            unbindService(serviceConnection);
+            isBound = false;
+        }
+    }
+
+    private void initializeBluetooth() {
+        if (isBound) {
+            bluetoothService.startBluetoothConnection(handler);
+        }
+    }
+
+
+
+
 
 }
