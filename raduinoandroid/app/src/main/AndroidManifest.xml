@@ -24,6 +24,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:name=".RaduinoApp"
         android:supportsRtl="true"
         android:theme="@style/Theme.Raduinoandroid"
         tools:targetApi="31">

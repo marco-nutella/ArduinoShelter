@@ -97,6 +97,8 @@ public class BluetoothService extends Service {
                 }
             }
         }
+        RaduinoApp ra = (RaduinoApp) getApplicationContext();
+        ra.setBluetoothService(this);
     }
 
     public void sendBluetoothMessage(String message) throws UnsupportedEncodingException {

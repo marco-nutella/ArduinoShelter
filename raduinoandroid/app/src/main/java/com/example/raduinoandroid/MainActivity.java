@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch switchAlarm, switchLights;
-    private static final String TAG = "FrugalLogs";
+    private static final String TAG = "Raduino";
 
     // We will use a Handler to get the BT Connection status
     public static Handler handler;

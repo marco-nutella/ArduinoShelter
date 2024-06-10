@@ -23,7 +23,8 @@ import android.os.IBinder;
 
 public class RadioActivity extends AppCompatActivity {
 
-    private BluetoothService bluetoothService;
+    private RaduinoApp ra = (RaduinoApp) getApplicationContext();
+    private BluetoothService bluetoothService = ra.getBluetoothService();
     private boolean isBound = false;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -43,7 +44,7 @@ public class RadioActivity extends AppCompatActivity {
 
 
     public static Handler handler;
-    private static final String TAG = "FrugalLogs";
+    private static final String TAG = "Raduino";
     int Volume = 20;
     private TextView editTextVolume;
     private TextView editTextFrequency;
