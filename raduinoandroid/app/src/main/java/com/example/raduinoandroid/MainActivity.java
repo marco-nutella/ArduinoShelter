@@ -259,7 +259,6 @@ public class MainActivity extends AppCompatActivity {
                         editor.apply();
                         break;
                     case MessageConstants.MESSAGE_WRITE:
-                        break;
                     case MessageConstants.MESSAGE_ERROR:
                         break;
                 }
@@ -410,7 +409,7 @@ public class MainActivity extends AppCompatActivity {
         String humidity = sharedPref.getString("humidity", "0");
         String temperature = sharedPref.getString("temperature", "0");
 
-        Info info = new Info(Integer.parseInt(id), Integer.parseInt(humidity), Integer.parseInt(temperature), country, city, region, false);
+        Info info = new Info(Integer.parseInt(id), Integer.parseInt(humidity), Integer.parseInt(temperature), country, city, region, true);
 
         try {
             RetrofitInfoInterface aa = RetrofitService.getRetrofit().create(RetrofitInfoInterface.class);
@@ -422,6 +421,7 @@ public class MainActivity extends AppCompatActivity {
                     String tendId = newid + "";
                     editor.putString("tendId", tendId);
                     String text = "Change Id " + newid;
+                    editor.apply();
                     if (isBound) {
                         try {
                             bluetoothService.sendBluetoothMessage(text);
