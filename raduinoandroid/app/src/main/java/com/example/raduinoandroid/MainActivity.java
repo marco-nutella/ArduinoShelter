@@ -100,24 +100,7 @@ public class MainActivity extends AppCompatActivity {
         // Request necessary permissions
         requestBluetoothPermissions();
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-        if (isBound) {
-            try {
-                bluetoothService.sendBluetoothMessage("All Request 1");
-                wait(50);
-                        if("true".equals(alarm)){switchAlarm.setChecked(true);}else{switchAlarm.setChecked(false);}
-                        if("true".equals(lights)){
-                            switchLights.setChecked(true);
-                            warning.setVisibility(View.INVISIBLE);}
-                        else if("false".equals(lights)){
-                            switchLights.setChecked(false);
-                            warning.setVisibility(View.INVISIBLE);}
-                        else {switchLights.setChecked(false);
-                            warning.setVisibility(View.VISIBLE);}
 
-            } catch (UnsupportedEncodingException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -136,10 +119,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        if (isBound) {
+            try {
+                bluetoothService.sendBluetoothMessage("All Request 1");
+                wait(50);
+                if("true".equals(alarm)){switchAlarm.setChecked(true);}else{switchAlarm.setChecked(false);}
+                if("true".equals(lights)){
+                    switchLights.setChecked(true);
+                    warning.setVisibility(View.INVISIBLE);}
+                else if("false".equals(lights)){
+                    switchLights.setChecked(false);
+                    warning.setVisibility(View.INVISIBLE);}
+                else {switchLights.setChecked(false);
+                    warning.setVisibility(View.VISIBLE);}
+
+            } catch (UnsupportedEncodingException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 Log.d(TAG, String.valueOf(msg));
+
                 switch (msg.what) {
                     case MessageConstants.MESSAGE_READ:
                         String message = msg.obj.toString(); // Read message from Arduino

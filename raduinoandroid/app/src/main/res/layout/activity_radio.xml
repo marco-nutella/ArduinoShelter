@@ -117,6 +117,7 @@
         android:contentDescription="Alarm button calls 112"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:visibility="invisible"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/sos" />
 
@@ -127,6 +128,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:text="SOS"
+        android:visibility="invisible"
         android:textColor="#151414"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"

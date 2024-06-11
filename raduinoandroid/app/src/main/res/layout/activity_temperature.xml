@@ -79,6 +79,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        android:visibility="invisible"
         app:srcCompat="@drawable/sos"
         tools:ignore="HardcodedText,RedundantDescriptionCheck" />
 
@@ -87,6 +88,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
+        android:visibility="invisible"
         android:text="SOS"
         android:textColor="#151414"
         android:textStyle="bold"

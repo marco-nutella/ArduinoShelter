@@ -115,10 +115,11 @@ public class RadioActivity extends AppCompatActivity {
             Item clickedItem = (Item) parent.getItemAtPosition(position);
             String text = "Radio: " + clickedItem.getVariable();
             editTextFrequency.setText(text);
-            text = "Fm Channel " + clickedItem.getVariable();
+            int val = clickedItem.getVariable();
+            text = "F C " + val;
             if (isBound) {
                 try {
-                    bluetoothService.sendBluetoothMessage(text);
+                    bluetoothService.sendBluetoothMessage("AlarF CR "+ val);
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
@@ -127,11 +128,11 @@ public class RadioActivity extends AppCompatActivity {
 
 
         tuneUp.setOnClickListener(v -> {
-            String text = "Fm Up 1";
+            String text;
             if (isBound) {
                 try {
-                    bluetoothService.sendBluetoothMessage(text);
-                    wait(50);
+                    bluetoothService.sendBluetoothMessage("AlarF UR 1");
+                    wait(100);
                     String channele = sharedPref.getString("channel", "0");
                     text = "Radio: " + channele;
                     editTextFrequency.setText(text);
@@ -140,11 +141,11 @@ public class RadioActivity extends AppCompatActivity {
                 }
             }        });
         tuneDown.setOnClickListener(v -> {
-            String text = "Fm Down 1";
+            String text = "F D 1";
             if (isBound) {
                 try {
-                    bluetoothService.sendBluetoothMessage(text);
-                    wait(50);
+                    bluetoothService.sendBluetoothMessage("AlarF DR 1");
+                    wait(100);
                     String channele = sharedPref.getString("channel", "0");
                     text = "Radio: " + channele;
                     editTextFrequency.setText(text);
@@ -158,10 +159,10 @@ public class RadioActivity extends AppCompatActivity {
             if(Volume <= 0){Volume = 0;}
             String text = "Volume: "+ Volume ;
             editTextVolume.setText(text);
-            text = "Fm Volume " + Volume;
+            text = "F V " + Volume;
             if (isBound) {
                 try {
-                    bluetoothService.sendBluetoothMessage(text);
+                    bluetoothService.sendBluetoothMessage("AlarF VR "+ Volume);
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
@@ -173,10 +174,10 @@ public class RadioActivity extends AppCompatActivity {
             if(Volume >= 16){Volume = 15;}
             String text = "Volume: "+ Volume ;
             editTextVolume.setText(text);
-            text = "Fm Volume " + Volume;
+            text = "F V " + Volume;
             if (isBound) {
                 try {
-                    bluetoothService.sendBluetoothMessage(text);
+                    bluetoothService.sendBluetoothMessage("AlarF VR "+ Volume);
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
