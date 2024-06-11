@@ -1,6 +1,7 @@
 package com.example.raduinoandroid;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.Message;
@@ -55,11 +56,18 @@ public class RadioActivity extends AppCompatActivity {
         setContentView(R.layout.activity_radio);
         ra = (RaduinoApp) getApplicationContext();
         bluetoothService = ra.getBluetoothService();
-        Bundle extras = getIntent().getExtras();
-        if (extras != null) {
-            String Channel = extras.getString("Frequency");
-            //The key argument here must match that used in the other activity
-        }
+        editTextVolume= findViewById(R.id.Volume_text);
+        editTextFrequency =  findViewById(R.id.frequency_text);
+        SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+        String channel = sharedPref.getString("channel", "0");
+        String texto = "Radio: " + channel;
+        editTextFrequency.setText(texto);
+        String volume = sharedPref.getString("volume", "0");
+        texto = "Volume: "+ volume ;
+        editTextVolume.setText(texto);
+        Volume = Integer.parseInt(volume);
+
+
 
 
         Intent intent = new Intent(this, BluetoothService.class);
@@ -69,8 +77,7 @@ public class RadioActivity extends AppCompatActivity {
         Button decrementVolume = findViewById(R.id.button_decrement);
         Button tuneUp = findViewById(R.id.up_button);
         Button tuneDown = findViewById(R.id.down_button);
-        editTextVolume= findViewById(R.id.Volume_text);
-        editTextFrequency =  findViewById(R.id.frequency_text);
+
         ImageButton buttonBack = findViewById(R.id.back_button);
 
         ListView listView = findViewById(R.id.listView);
@@ -124,7 +131,11 @@ public class RadioActivity extends AppCompatActivity {
             if (isBound) {
                 try {
                     bluetoothService.sendBluetoothMessage(text);
-                } catch (UnsupportedEncodingException e) {
+                    wait(50);
+                    String channele = sharedPref.getString("channel", "0");
+                    text = "Radio: " + channele;
+                    editTextFrequency.setText(text);
+                } catch (UnsupportedEncodingException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }        });
@@ -133,7 +144,11 @@ public class RadioActivity extends AppCompatActivity {
             if (isBound) {
                 try {
                     bluetoothService.sendBluetoothMessage(text);
-                } catch (UnsupportedEncodingException e) {
+                    wait(50);
+                    String channele = sharedPref.getString("channel", "0");
+                    text = "Radio: " + channele;
+                    editTextFrequency.setText(text);
+                } catch (UnsupportedEncodingException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }        });

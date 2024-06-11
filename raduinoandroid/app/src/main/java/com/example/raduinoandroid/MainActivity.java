@@ -96,14 +96,25 @@ public class MainActivity extends AppCompatActivity {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         schedulePeriodicWork();
         Intent intent = new Intent(this, BluetoothService.class);
-
+        TextView warning = findViewById(R.id.Pop_up);
         // Request necessary permissions
         requestBluetoothPermissions();
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         if (isBound) {
             try {
                 bluetoothService.sendBluetoothMessage("All Request 1");
-            } catch (UnsupportedEncodingException e) {
+                wait(50);
+                        if("true".equals(alarm)){switchAlarm.setChecked(true);}else{switchAlarm.setChecked(false);}
+                        if("true".equals(lights)){
+                            switchLights.setChecked(true);
+                            warning.setVisibility(View.INVISIBLE);}
+                        else if("false".equals(lights)){
+                            switchLights.setChecked(false);
+                            warning.setVisibility(View.INVISIBLE);}
+                        else {switchLights.setChecked(false);
+                            warning.setVisibility(View.VISIBLE);}
+
+            } catch (UnsupportedEncodingException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -116,7 +127,6 @@ public class MainActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
-        TextView warning = findViewById(R.id.Pop_up);
         ImageButton callButton = findViewById(R.id.emergency_button);
         callButton.setOnClickListener(v -> {
             try {

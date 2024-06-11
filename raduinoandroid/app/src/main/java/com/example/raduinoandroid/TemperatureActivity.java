@@ -1,17 +1,15 @@
 package com.example.raduinoandroid;
 
-import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
@@ -68,6 +66,20 @@ public class TemperatureActivity extends AppCompatActivity {
 
         Intent intent = new Intent(this, BluetoothService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        maxTemperatureText = findViewById(R.id.max_temperature_text);
+        TextView temperatureText = findViewById(R.id.temperature_text);
+
+
+
+        SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+        String temperature = sharedPref.getString("temperature", "0");
+        String texto = "Temperature: "+ temperature +" C" ;
+        temperatureText.setText(texto);
+        String maxtemp = sharedPref.getString("maxTemperature", "0");
+        texto = "Max Temperature: "+ maxtemp +" C" ;
+        maxTemperatureText.setText(texto);
+        maxTemperature = Integer.parseInt(maxtemp);
+
 
         ImageButton buttonBack = findViewById(R.id.back_button);
         switchVentilation = findViewById(R.id.switch_ventilation);
@@ -75,7 +87,6 @@ public class TemperatureActivity extends AppCompatActivity {
         Button incrementTemperature = findViewById(R.id.button_increment);
         Button decreementTemperature = findViewById(R.id.button_decrement);
         Button confirmButton = findViewById(R.id.button_update);
-        maxTemperatureText = findViewById(R.id.max_temperature_text);
         editTextNumber = findViewById(R.id.editTextNumber);
 
         editTextNumber.setText(String.valueOf(maxTemperature));
