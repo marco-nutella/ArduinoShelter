@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
@@ -24,8 +25,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
+
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        schedulePeriodicWork();
+
         Intent intent = new Intent(this, BluetoothService.class);
         TextView warning = findViewById(R.id.Pop_up);
         // Request necessary permissions
@@ -145,7 +145,10 @@ public class MainActivity extends AppCompatActivity {
 
                 switch (msg.what) {
                     case MessageConstants.MESSAGE_READ:
-                        String message = msg.obj.toString(); // Read message from Arduino
+                        if("Unable to connect to the BT device".equals(msg.obj)){ return;}
+                        byte[] readBuf = (byte[]) msg.obj; // Read the byte array from the message
+                        String message = new String(readBuf, 0, msg.arg1); // Convert the byte array to a string
+                        message = message.replace("\r", "").replace("\n", "");
                         String part1 = null, part2 = null;
                         int part3 = 0;
                         int firstSpaceIndex = message.indexOf(' ');
@@ -163,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = sharedPref.edit();
-                        if ("All".equals(part1)) {
+                        if ("All".equals(part1)||"ASAll".equals(part1)||"l".equals(part1)) {
                             String[] parts = part2.split("\\.");
                             // Parse each part into the respective data type
                             temperature = parts[0];
@@ -188,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
                             editor.putString("tendId", tendId);
                             editor.putString("humidity", humidity);
 
-                        } else if("Fm".equals(part1)){
+                        } else if("Fm".equals(part1)||"ASFm".equals(part1)){
                             if("Channel".equals(part2)){
                                 channel = part3 + "";
                                 editor.putString("channel", channel);
@@ -197,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
                                 editor.putString("volume", volume);
 
                             }
-                        } else if("Distress".equals(part1)){
+                        } else if("Distress".equals(part1)||"ASDistress".equals(part1)||"stress".equals(part1)){
                             if("Signal".equals(part2)){
                                 try {
                                     makePhoneCall();
@@ -205,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
                                     throw new RuntimeException(e);
                                 }
                             }
-                        } else if("Ventilation".equals(part1)){
+                        } else if("Ventilation".equals(part1)||"ntilation".equals(part1)||"ASVentilation".equals(part1)){
                             if("On".equals(part2)){
                                 ventilation = "true";
                                 editor.putString("ventilation", ventilation);
@@ -214,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
                                 editor.putString("ventilation", ventilation);
 
                             }
-                        } else if("autoVentilation".equals(part1)){
+                        } else if("autoVentilation".equals(part1)||"ASautoVentilation".equals(part1)||"toVentilation".equals(part1)){
                             if("On".equals(part2)){
                                 autoVentilation = "true";
                                 editor.putString("autoVentilation", autoVentilation);
@@ -223,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
                                 editor.putString("autoVentilation", autoVentilation);
 
                             }
-                        } else if("Lights".equals(part1)){
+                        } else if("Lights".equals(part1)||"ASLights".equals(part1)||"ghts".equals(part1)){
                             if("On".equals(part2)){
                                 lights = "true";
                                 editor.putString("lights", lights);
@@ -240,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
                                 switchLights.setChecked(false);
                                 warning.setVisibility(View.VISIBLE);
                             }
-                        } else if("Alarm".equals(part1)){
+                        } else if("Alarm".equals(part1)||"arm".equals(part1)||"ASAlarm".equals(part1)){
                             if("On".equals(part2)){
                                 alarm = "true";
                                 editor.putString("alarm", alarm);
@@ -251,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
                                 switchAlarm.setChecked(false);
 
                             }
-                        } else if("Temperature".equals(part1)){
+                        } else if("Temperature".equals(part1)||"ASTemperature".equals(part1)||"mperature".equals(part1)){
                             if("Temperature".equals(part2)){
                                 temperature = part3+"";
                                 editor.putString("temperature", temperature);
@@ -259,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
                                 maxTemperature = part3+"";
                                 editor.putString("maxTemperature", maxTemperature);
                             }
-                        } else if("Data".equals(part1)){
+                        } else if("Data".equals(part1)||"ASData".equals(part1)||"ta".equals(part1)){
                             String[] parts = part2.split("\\.");
                             // Parse each part into the respective data type
                             temperature = parts[0];
@@ -332,6 +335,12 @@ public class MainActivity extends AppCompatActivity {
 
         buttonBT.setOnClickListener(view -> {
             if (isBound) {
+                try {
+                    bluetoothService.sendBluetoothMessage("All Request 1");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+
                 bluetoothService.startBluetoothConnection(this,handler);
             } else {
                 bluetoothService.startBluetoothConnection(this,handler);
@@ -413,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }
-        wait(50);
+        Thread.sleep(50);
         // Retrieve the values
         String city = sharedPref.getString("city", "Default City");
         String region = sharedPref.getString("region", "Default Region");
@@ -514,9 +523,5 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void schedulePeriodicWork() {
-        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(TimerCall.class, 5, TimeUnit.MINUTES)
-                .build();
-        WorkManager.getInstance(this).enqueue(periodicWorkRequest);
-    }
+
 }

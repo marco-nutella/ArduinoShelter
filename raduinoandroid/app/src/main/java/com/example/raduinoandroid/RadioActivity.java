@@ -132,8 +132,8 @@ public class RadioActivity extends AppCompatActivity {
             if (isBound) {
                 try {
                     bluetoothService.sendBluetoothMessage("AlarF UR 1");
-                    wait(100);
-                    String channele = sharedPref.getString("channel", "0");
+                    Thread.sleep(50);
+                    String channele = sharedPref.getString("channel", "1043");
                     text = "Radio: " + channele;
                     editTextFrequency.setText(text);
                 } catch (UnsupportedEncodingException | InterruptedException e) {
@@ -145,8 +145,8 @@ public class RadioActivity extends AppCompatActivity {
             if (isBound) {
                 try {
                     bluetoothService.sendBluetoothMessage("AlarF DR 1");
-                    wait(100);
-                    String channele = sharedPref.getString("channel", "0");
+                    Thread.sleep(50);
+                    String channele = sharedPref.getString("channel", "932");
                     text = "Radio: " + channele;
                     editTextFrequency.setText(text);
                 } catch (UnsupportedEncodingException | InterruptedException e) {
@@ -201,10 +201,14 @@ public class RadioActivity extends AppCompatActivity {
             }
         };
 
-
-
         buttonBack.setOnClickListener(v -> startActivity(new Intent(RadioActivity.this, MainActivity.class)));
-
+        ImageButton buttonBT = findViewById(R.id.button_bt);
+        buttonBT.setOnClickListener(view -> {
+            if (isBound) {
+                bluetoothService.startBluetoothConnection(this,handler);
+            }
+            Log.d(TAG, "Button Pressed");
+        });
     }
 
     @Override
