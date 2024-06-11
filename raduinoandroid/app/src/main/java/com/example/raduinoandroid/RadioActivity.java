@@ -55,6 +55,11 @@ public class RadioActivity extends AppCompatActivity {
         setContentView(R.layout.activity_radio);
         ra = (RaduinoApp) getApplicationContext();
         bluetoothService = ra.getBluetoothService();
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            String Channel = extras.getString("Frequency");
+            //The key argument here must match that used in the other activity
+        }
 
 
         Intent intent = new Intent(this, BluetoothService.class);

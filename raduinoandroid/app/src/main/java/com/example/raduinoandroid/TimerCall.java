@@ -31,8 +31,11 @@ public class TimerCall extends Worker {
         String city = sharedPref.getString("city", "Default City");
         String region = sharedPref.getString("region", "Default Region");
         String country = sharedPref.getString("country", "Default Country");
-        int id = 255;
-        Info info = new Info(id, 10, 20, country, city, region, false);
+        String id = sharedPref.getString("tendId", "0");
+        String humidity = sharedPref.getString("humidity", "0");
+        String temperature = sharedPref.getString("temperature", "0");
+
+        Info info = new Info(Integer.parseInt(id), Integer.parseInt(humidity), Integer.parseInt(temperature), country, city, region, false);
 
         try {
             RetrofitInfoInterface aa = RetrofitService.getRetrofit().create(RetrofitInfoInterface.class);

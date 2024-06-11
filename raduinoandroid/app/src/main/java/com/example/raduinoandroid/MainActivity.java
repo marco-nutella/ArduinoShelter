@@ -1,5 +1,7 @@
 package com.example.raduinoandroid;
 
+import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -27,10 +29,9 @@ import androidx.work.WorkManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.channels.Channel;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,11 @@ import android.location.Geocoder;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.widget.TextView;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CALL_PHONE = 1;
@@ -73,6 +79,15 @@ public class MainActivity extends AppCompatActivity {
             isBound = false;
         }
     };
+    private String temperature;
+    private String maxTemperature;
+    private String channel;
+    private String volume;
+    private String lights;
+    private String alarm;
+    private String ventilation;
+    private String autoVentilation;
+    private String tendId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +100,13 @@ public class MainActivity extends AppCompatActivity {
         // Request necessary permissions
         requestBluetoothPermissions();
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        if (isBound) {
+            try {
+                bluetoothService.sendBluetoothMessage("All Request 1");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -94,9 +116,15 @@ public class MainActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
-
+        TextView warning = findViewById(R.id.Pop_up);
         ImageButton callButton = findViewById(R.id.emergency_button);
-        callButton.setOnClickListener(v -> makePhoneCall());
+        callButton.setOnClickListener(v -> {
+            try {
+                makePhoneCall();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         handler = new Handler(Looper.getMainLooper()) {
             @Override
@@ -104,7 +132,131 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, String.valueOf(msg));
                 switch (msg.what) {
                     case MessageConstants.MESSAGE_READ:
-                        String arduinoMsg = msg.obj.toString(); // Read message from Arduino
+                        String message = msg.obj.toString(); // Read message from Arduino
+                        String part1 = null, part2 = null;
+                        int part3 = 0;
+                        int firstSpaceIndex = message.indexOf(' ');
+                        int secondSpaceIndex = message.indexOf(' ', firstSpaceIndex + 1);
+
+                        if (firstSpaceIndex != -1 && secondSpaceIndex != -1) {
+                            part1 = message.substring(0, firstSpaceIndex);
+                            part2 = message.substring(firstSpaceIndex + 1, secondSpaceIndex);
+                            String part3String = message.substring(secondSpaceIndex + 1);
+                            try {
+                                part3 = Integer.parseInt(part3String);
+                            } catch (NumberFormatException e) {
+                                part3 = -1; // or some default value indicating the error
+                            }
+                        }
+                        SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        if ("All".equals(part1)) {
+                            String[] parts = part2.split("\\.");
+                            // Parse each part into the respective data type
+                            temperature = parts[0];
+                            maxTemperature = parts[1];
+                            channel = parts[2];
+                            volume = parts[3];
+                            lights = parts[4];
+                            alarm = parts[5];
+                            ventilation = parts[6];
+                            autoVentilation = parts[7];
+                            String humidity = parts[8];
+                            tendId = part3 + "";
+                            warning.setVisibility(View.INVISIBLE);
+                            editor.putString("temperature", temperature);
+                            editor.putString("maxTemperature", maxTemperature);
+                            editor.putString("channel", channel);
+                            editor.putString("volume", volume);
+                            editor.putString("lights", lights);
+                            editor.putString("alarm", alarm);
+                            editor.putString("ventilation", ventilation);
+                            editor.putString("autoVentilation", autoVentilation);
+                            editor.putString("tendId", tendId);
+                            editor.putString("humidity", humidity);
+
+                        } else if("Fm".equals(part1)){
+                            if("Channel".equals(part2)){
+                                channel = part3 + "";
+                                editor.putString("channel", channel);
+                            } else if ("Volume".equals(part2)) {
+                                volume = part3 + "";
+                                editor.putString("volume", volume);
+
+                            }
+                        } else if("Distress".equals(part1)){
+                            if("Signal".equals(part2)){
+                                try {
+                                    makePhoneCall();
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        } else if("Ventilation".equals(part1)){
+                            if("On".equals(part2)){
+                                ventilation = "true";
+                                editor.putString("ventilation", ventilation);
+                            } else if ("Off".equals(part2)) {
+                                ventilation = "false";
+                                editor.putString("ventilation", ventilation);
+
+                            }
+                        } else if("autoVentilation".equals(part1)){
+                            if("On".equals(part2)){
+                                autoVentilation = "true";
+                                editor.putString("autoVentilation", autoVentilation);
+                            } else if ("Off".equals(part2)) {
+                                autoVentilation = "false";
+                                editor.putString("autoVentilation", autoVentilation);
+
+                            }
+                        } else if("Lights".equals(part1)){
+                            if("On".equals(part2)){
+                                lights = "true";
+                                editor.putString("lights", lights);
+                                switchLights.setChecked(true);
+                                warning.setVisibility(View.INVISIBLE);
+                            } else if ("Off".equals(part2)) {
+                                lights = "false";
+                                editor.putString("lights", lights);
+                                switchLights.setChecked(false);
+                                warning.setVisibility(View.INVISIBLE);
+                            } else if ("Emergency".equals(part2)) {
+                                lights = "Emergency";
+                                editor.putString("lights", lights);
+                                switchLights.setChecked(false);
+                                warning.setVisibility(View.VISIBLE);
+                            }
+                        } else if("Alarm".equals(part1)){
+                            if("On".equals(part2)){
+                                alarm = "true";
+                                editor.putString("alarm", alarm);
+                                switchAlarm.setChecked(false);
+                            } else if ("Off".equals(part2)) {
+                                alarm = "false";
+                                editor.putString("alarm", alarm);
+                                switchAlarm.setChecked(false);
+
+                            }
+                        } else if("Temperature".equals(part1)){
+                            if("Temperature".equals(part2)){
+                                temperature = part3+"";
+                                editor.putString("temperature", temperature);
+                            } else if ("Max".equals(part2)) {
+                                maxTemperature = part3+"";
+                                editor.putString("maxTemperature", maxTemperature);
+                            }
+                        } else if("Data".equals(part1)){
+                            String[] parts = part2.split("\\.");
+                            // Parse each part into the respective data type
+                            temperature = parts[0];
+                            String humidity = parts[1];
+                            tendId = part3 + "";
+                            editor.putString("temperature", temperature);
+                            editor.putString("humidity", humidity);
+                            editor.putString("tendId", tendId);
+                        }
+                        editor.apply();
                         break;
                     case MessageConstants.MESSAGE_WRITE:
                         break;
@@ -230,7 +382,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void makePhoneCall() {
+    private void makePhoneCall() throws InterruptedException {
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL_PHONE);
         } else {
@@ -238,15 +390,57 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startCall() {
+    private void startCall() throws InterruptedException {
         // Access the SharedPreferences
         SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
 
+        if (isBound) {
+            try {
+                bluetoothService.sendBluetoothMessage("Request Data 1");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        wait(50);
         // Retrieve the values
         String city = sharedPref.getString("city", "Default City");
         String region = sharedPref.getString("region", "Default Region");
         String country = sharedPref.getString("country", "Default Country");
+        String id = sharedPref.getString("tendId", "0");
+        String humidity = sharedPref.getString("humidity", "0");
+        String temperature = sharedPref.getString("temperature", "0");
 
+        Info info = new Info(Integer.parseInt(id), Integer.parseInt(humidity), Integer.parseInt(temperature), country, city, region, false);
+
+        try {
+            RetrofitInfoInterface aa = RetrofitService.getRetrofit().create(RetrofitInfoInterface.class);
+            aa.PostInfo(info).enqueue(new Callback<Integer>() {
+                @Override
+                public void onResponse(Call<Integer> call, Response<Integer> response) {
+                    Integer newid = response.body();
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    String tendId = newid + "";
+                    editor.putString("tendId", tendId);
+                    String text = "Change Id " + newid;
+                    if (isBound) {
+                        try {
+                            bluetoothService.sendBluetoothMessage(text);
+                        } catch (UnsupportedEncodingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                }
+
+                @Override
+                public void onFailure(Call<Integer> call, Throwable t) {
+                    Log.e(TAG, "onFailure: " + t.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         Intent callIntent = new Intent(Intent.ACTION_CALL);
         // Replace with your phone number
         String phoneNumber = "969787598";
@@ -289,7 +483,11 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == REQUEST_CALL_PHONE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Call permissions granted.");
-                startCall();
+                try {
+                    startCall();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 Log.e(TAG, "Call permissions denied.");
             }
@@ -304,7 +502,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void schedulePeriodicWork() {
-        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(TimerCall.class, 15, TimeUnit.MINUTES)
+        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(TimerCall.class, 5, TimeUnit.MINUTES)
                 .build();
         WorkManager.getInstance(this).enqueue(periodicWorkRequest);
     }
