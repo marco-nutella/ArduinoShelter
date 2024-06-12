@@ -271,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
                             editor.putString("temperature", temperature);
                             editor.putString("humidity", humidity);
                             editor.putString("tendId", tendId);
-                        }
+                        } else{return;}
                         editor.apply();
                         break;
                     case MessageConstants.MESSAGE_WRITE:
@@ -343,6 +343,11 @@ public class MainActivity extends AppCompatActivity {
 
                 bluetoothService.startBluetoothConnection(this,handler);
             } else {
+                try {
+                    bluetoothService.sendBluetoothMessage("All Request 1");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
                 bluetoothService.startBluetoothConnection(this,handler);
             }
             Log.d(TAG, "Button Pressed");
@@ -414,7 +419,7 @@ public class MainActivity extends AppCompatActivity {
     private void startCall() throws InterruptedException {
         // Access the SharedPreferences
         SharedPreferences sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
-
+        getLocation();
         if (isBound) {
             try {
                 bluetoothService.sendBluetoothMessage("Request Data 1");
